@@ -12,6 +12,9 @@ export default class Player extends cc.Component {
   @property(cc.Sprite)
   sprite_move_right: cc.Sprite = null;
 
+  @property(cc.Prefab)
+  beam_prefab: cc.Prefab = null;  // ビーム
+
   // [TODO] Enum 型を使う
   state_live_list: string[] = ['ALIVE', 'EXPLODING', 'DEAD', 'REVIVING'];
   state_move_list: string[] = ['STOP', 'MOVE_LEFT', 'MOVE_RIGHT'];
@@ -23,12 +26,17 @@ export default class Player extends cc.Component {
   // fall_step_elapsed: number = 0;  // 落下アニメーションの経過ステップ数(MAXになったら0にリセットされる)
 
   move_dx: number = 20;           // 移動速度
+  shooting_span: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
+  shooting_interval: number = 1;  // 発射間隔
+
+  beams: cc.Node[] = [];
 
   /**
    * プレイヤーを移動させる
    * @param moveLeft 左への移動可否(否なら右へ移動))
    */
-  movePlayer(moveLeft: boolean) {
+  movePlayer(moveLeft: boolean): void {
+    this.state_move = moveLeft ? 'MOVE_LEFT' : 'MOVE_RIGHT';
     const half_width_of_parent = this.node.parent.width / 2;
     const half_width_myself = this.node.width / 2;
     const new_x = Math.max(-(half_width_of_parent) + half_width_myself, // 左端
@@ -38,9 +46,16 @@ export default class Player extends cc.Component {
   }
 
   /**
+   * プレイヤーを停止させる
+   */
+  stopPlayer(): void {
+    this.state_move = 'STOP';
+  }
+
+  /**
    * プレイヤーの画像をステータスに応じて再設定する
    */
-  resetSpriteFrameByMoveState() {
+  resetSpriteFrameByMoveState(): void {
     const sprite = this.node.getComponent(cc.Sprite);
     switch(this.state_move) {
       case 'STOP':
@@ -63,8 +78,23 @@ export default class Player extends cc.Component {
     // [TODO] 復活アニメーションを作成する
   }
 
+  /**
+   * ビームを発射する
+   */
+  shoot(): void {
+    const beam = cc.instantiate(this.beam_prefab);
+    beam.setPosition(this.node.position.x, this.node.position.y + this.node.height / 2);
+    this.node.parent.addChild(beam);
+    this.beams.push(beam);
+    this.shooting_span = 0;
+  }
+
+  /*
+   * ===== LIFE-CYCLE CALLBACKS =====
+   */
+
   start() {
-    // キーボード入力でプレイヤーを移動させる
+    // キーボード入力でプレイヤー移動とビーム発射を行う
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, (e) => {
       switch (e.keyCode) {
         case cc.KEY.left:
@@ -74,6 +104,12 @@ export default class Player extends cc.Component {
         case cc.KEY.right:
           this.state_move = 'MOVE_RIGHT';
           this.movePlayer(false);
+          break;
+        case cc.KEY.space:
+          this.shooting_span++;
+          if (this.shooting_span >= this.shooting_interval) {
+            this.shoot();
+          }
           break;
       }
       this.resetSpriteFrameByMoveState();
