@@ -1,0 +1,30 @@
+{
+  "ver": "2.0.0",
+  "uuid": "2d7eadd9-ee8c-4bf3-8d0d-1b083318ae75",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "subMetas": {
+    "enemy_fall2": {
+      "ver": "1.0.3",
+      "uuid": "8d011d99-ff38-4c5f-aa57-2fffd1ba5c72",
+      "rawTextureUuid": "2d7eadd9-ee8c-4bf3-8d0d-1b083318ae75",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 2,
+      "trimY": 2,
+      "width": 46,
+      "height": 46,
+      "rawWidth": 50,
+      "rawHeight": 50,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}
