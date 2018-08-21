@@ -408,7 +408,10 @@
     "sprite_fall": {
       "__id__": 6
     },
-    "max_fall_step": 540
+    "max_fall_step": 540,
+    "beam_prefab": {
+      "__uuid__": "4ea9475c-4521-4905-867f-f0beebf96b83"
+    }
   },
   {
     "__type__": "cc.BoxCollider",

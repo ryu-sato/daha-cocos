@@ -7,11 +7,10 @@ export default class Enemy extends cc.Component {
   state_live_list: string[] = ['ALIVE', 'EXPLODING', 'DEAD'];
   state_move_list: string[] = ['STOP', 'FALL'];
 
-  state_live: string = 'ALIVE';   // 生存ステータス
-  state_move: string = 'FALL';    // 動作ステータス
+  state_live: string = 'ALIVE';     // 生存ステータス
+  state_move: string = 'STOP';      // 動作ステータス
 
-  life: number = 1;               // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
-  // fall_step_elapsed: number = 0;  // 落下アニメーションの経過ステップ数(MAXになったら0にリセットされる)
+  life: number = 1;                 // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
 
   @property(cc.Sprite)
   sprite_stop: cc.Sprite = null;    // 停止
@@ -25,6 +24,14 @@ export default class Enemy extends cc.Component {
   @property
   max_fall_step: number = 0;        // 落下アニメーションの最大ステップ数
 
+  @property(cc.Prefab)
+  beam_prefab: cc.Prefab = null;    // ビーム
+
+  shooting_span: number = 0;        // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
+  shooting_interval: number = 60;   // 発射間隔
+
+  beams: cc.Node[] = [];
+
   processAlive() {
     switch (this.state_move) {
       case 'FALL':
@@ -36,6 +43,10 @@ export default class Enemy extends cc.Component {
           - (this.node.height / this.max_fall_step));
         return;
       case 'STOP':
+        this.shooting_span++;
+        if (this.shooting_span >= this.shooting_interval) {
+          this.shoot();
+        }
         return;
     }
   }
@@ -52,6 +63,21 @@ export default class Enemy extends cc.Component {
   processDead() {
     this.node.parent.removeChild(this.node);
     // this.destroy();
+  }
+
+  shoot(): void {
+    const beam = cc.instantiate(this.beam_prefab);
+
+    beam.setPosition(this.node.position.x, this.node.position.y - this.node.height / 2);
+    let dx: number = 0, dy: number = -3;
+    // [TODO] フォーメーションに応じて攻撃方法を変える
+    const direction = beam.getChildByName('direction');
+    direction.width = dx;
+    direction.height = dy;
+
+    this.node.parent.addChild(beam);
+    this.beams.push(beam);
+    this.shooting_span = 0;
   }
 
   /**
@@ -85,11 +111,17 @@ export default class Enemy extends cc.Component {
     cc.director.getCollisionManager().enabled = true;
   }
 
+  /**
+   * ノード同士の処理処理
+   * @param other 衝突相手
+   * @param self 自分
+   */
   onCollisionEnter(other, self) {
-    switch (other.tag) {
-      case 2:  // プレイヤービーム
+    if (other.tag === 2) {  // プレイヤービームとの衝突
+      this.life--;
+      if (this.life <= 0) {
         this.state_live = 'EXPLODING';
-        break;
+      }
     }
   }
 

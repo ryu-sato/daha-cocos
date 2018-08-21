@@ -83,15 +83,49 @@ export default class Player extends cc.Component {
    */
   shoot(): void {
     const beam = cc.instantiate(this.beam_prefab);
+
     beam.setPosition(this.node.position.x, this.node.position.y + this.node.height / 2);
+    let dx: number = 0, dy: number = 10;
+    switch (this.state_move) {
+      case 'STOP':
+        dx = 0;
+        break;
+      case 'MOVE_LEFT':
+        dx = 2;
+        break;
+      case 'MOVE_RIGHT':
+        dx = -2;
+        break;
+    }
+    const direction = beam.getChildByName('direction');
+    direction.width = dx;
+    direction.height = dy;
+
     this.node.parent.addChild(beam);
     this.beams.push(beam);
     this.shooting_span = 0;
   }
 
-  /*
-   * ===== LIFE-CYCLE CALLBACKS =====
+  onEnable() {
+    // 衝突判定を有効にする
+    cc.director.getCollisionManager().enabled = true;
+  }
+
+  /**
+   * ノード同士の処理処理
+   * @param other 衝突相手
+   * @param self 自分
    */
+  onCollisionEnter(other, self) {
+    if (other.tag === 3) {  // 敵機ビームとの衝突
+      this.life--;
+      if (this.life <= 0) {
+        this.state_live = 'EXPLODING';
+      }
+    }
+  }
+
+  /* ===== LIFE-CYCLE CALLBACKS ===== */
 
   start() {
     // キーボード入力でプレイヤー移動とビーム発射を行う
