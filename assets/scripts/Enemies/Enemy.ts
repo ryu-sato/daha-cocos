@@ -1,54 +1,50 @@
-import PlayingCanvas from "../Playing/PlayingCanvas";
-
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class Enemy extends cc.Component {
 
-  canvas: PlayingCanvas = null;
-
   // [TODO] Enum 型を使う
-  state_live_list: string[] = ['ALIVE', 'EXPLODING', 'DEAD'];
-  state_move_list: string[] = ['STOP', 'FALL'];
+  stateLiveList: string[] = ['ALIVE', 'EXPLODING', 'DEAD'];
+  stateMoveList: string[] = ['STOP', 'FALL'];
 
-  state_live: string = 'ALIVE';     // 生存ステータス
-  state_move: string = 'STOP';      // 動作ステータス
+  stateLive: string = 'ALIVE';     // 生存ステータス
+  stateMove: string = 'STOP';      // 動作ステータス
 
   life: number = 1;                 // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
 
   @property(cc.Sprite)
-  sprite_stop: cc.Sprite = null;    // 停止
+  spriteStop: cc.Sprite = null;    // 停止
 
   @property(cc.Sprite)
-  sprite_explode: cc.Sprite = null; // 爆発アニメーション
+  spriteExplode: cc.Sprite = null; // 爆発アニメーション
 
   @property(cc.Sprite)
-  sprite_fall: cc.Sprite = null;    // 落下アニメーション
+  spriteFall: cc.Sprite = null;    // 落下アニメーション
 
   @property
-  max_fall_step: number = 0;        // 落下アニメーションの最大ステップ数
+  maxFallStep: number = 0;        // 落下アニメーションの最大ステップ数
 
   @property(cc.Prefab)
-  beam_prefab: cc.Prefab = null;    // ビーム
+  beamPrefab: cc.Prefab = null;    // ビーム
 
-  shooting_span: number = 0;        // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
-  shooting_interval: number = 60;   // 発射間隔
+  shootingSpan: number = 0;        // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
+  shootingInterval: number = 60;   // 発射間隔
 
   beams: cc.Node[] = [];
 
   processAlive() {
-    switch (this.state_move) {
+    switch (this.stateMove) {
       case 'FALL':
-        const fall_anime_state = this.sprite_fall.getComponent(cc.Animation).getAnimationState("fall");
-        if (!fall_anime_state.isPlaying || fall_anime_state.isPaused) {
-          fall_anime_state.play();
+        const fallAnimeState = this.spriteFall.getComponent(cc.Animation).getAnimationState("fall");
+        if (!fallAnimeState.isPlaying || fallAnimeState.isPaused) {
+          fallAnimeState.play();
         }
         this.node.setPositionY(this.node.position.y
-          - (this.node.height / this.max_fall_step));
+          - (this.node.height / this.maxFallStep));
         return;
       case 'STOP':
-        this.shooting_span++;
-        if (this.shooting_span >= this.shooting_interval) {
+        this.shootingSpan++;
+        if (this.shootingSpan >= this.shootingInterval) {
           this.shoot();
         }
         return;
@@ -56,11 +52,11 @@ export default class Enemy extends cc.Component {
   }
 
   processExplode() {
-    const explode_anime_state = this.sprite_explode.getComponent(cc.Animation).getAnimationState("explode");
-    if (!explode_anime_state.isPlaying || explode_anime_state.isPaused) {
-      explode_anime_state.play();
-    } else if (explode_anime_state.time > 0.20) {
-      this.state_live = 'DEAD';
+    const explodeAnimeState = this.spriteExplode.getComponent(cc.Animation).getAnimationState("explode");
+    if (!explodeAnimeState.isPlaying || explodeAnimeState.isPaused) {
+      explodeAnimeState.play();
+    } else if (explodeAnimeState.time > 0.20) {
+      this.stateLive = 'DEAD';
     }
   }
 
@@ -70,7 +66,7 @@ export default class Enemy extends cc.Component {
   }
 
   shoot(): void {
-    const beam = cc.instantiate(this.beam_prefab);
+    const beam = cc.instantiate(this.beamPrefab);
 
     beam.setPosition(this.node.position.x, this.node.position.y - this.node.height / 2);
     let dx: number = 0, dy: number = -3;
@@ -81,7 +77,7 @@ export default class Enemy extends cc.Component {
 
     this.node.parent.addChild(beam);
     this.beams.push(beam);
-    this.shooting_span = 0;
+    this.shootingSpan = 0;
   }
 
   /**
@@ -89,19 +85,19 @@ export default class Enemy extends cc.Component {
    */
   resetSpriteFrameByMoveState(): void {
     const sprite = this.node.getComponent(cc.Sprite);
-    if (this.state_live === 'ALIVE') {
-      switch(this.state_move) {
+    if (this.stateLive === 'ALIVE') {
+      switch(this.stateMove) {
         case 'STOP':
-          sprite.spriteFrame = this.sprite_stop.spriteFrame;
+          sprite.spriteFrame = this.spriteStop.spriteFrame;
           return;
         case 'FALL':
-          sprite.spriteFrame = this.sprite_fall.spriteFrame;
+          sprite.spriteFrame = this.spriteFall.spriteFrame;
           return;
       }
     } else {
-      switch(this.state_live) {
+      switch(this.stateLive) {
         case 'EXPLODING':
-          sprite.spriteFrame = this.sprite_explode.spriteFrame;
+          sprite.spriteFrame = this.spriteExplode.spriteFrame;
           return;
         case 'DEAD':
           return;
@@ -123,13 +119,13 @@ export default class Enemy extends cc.Component {
     if (other.tag === 2) {  // プレイヤービームとの衝突
       this.life--;
       if (this.life <= 0) {
-        this.state_live = 'EXPLODING';
+        this.stateLive = 'EXPLODING';
       }
     }
   }
 
   update(dt) {
-    switch (this.state_live) {
+    switch (this.stateLive) {
       case 'ALIVE':
         this.processAlive();
         break;
@@ -140,7 +136,7 @@ export default class Enemy extends cc.Component {
         this.processDead();
         break;
       default:
-        console.log('invalid state: ' + this.state_live);
+        console.log('invalid state: ' + this.stateLive);
         break;
     }
     this.resetSpriteFrameByMoveState();

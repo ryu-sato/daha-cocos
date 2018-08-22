@@ -1,119 +1,116 @@
-import PlayingCanvas from "../Playing/PlayingCanvas";
-
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class Player extends cc.Component {
 
   @property(cc.Sprite)
-  sprite_stop: cc.Sprite = null;
+  spriteStop: cc.Sprite = null;
 
   @property(cc.Sprite)
-  sprite_move_left: cc.Sprite = null;
+  spriteMoveLeft: cc.Sprite = null;
 
   @property(cc.Sprite)
-  sprite_move_right: cc.Sprite = null;
+  spriteMoveRight: cc.Sprite = null;
 
   @property(cc.Sprite)
-  sprite_explode: cc.Sprite = null; // 爆発アニメーション
+  spriteExplode: cc.Sprite = null; // 爆発アニメーション
 
   @property(cc.Prefab)
-  beam_prefab: cc.Prefab = null;  // ビーム
+  beamPrefab: cc.Prefab = null;  // ビーム
 
   // [TODO] Enum 型を使う
-  state_live_list: string[] = ['ALIVE', 'EXPLODING', 'EXPLODED', 'REVIVING', 'DEAD'];
-  state_move_list: string[] = ['STOP', 'MOVE_LEFT', 'MOVE_RIGHT'];
+  stateLiveList: string[] = ['ALIVE', 'EXPLODING', 'EXPLODED', 'REVIVING', 'DEAD'];
+  stateMoveList: string[] = ['STOP', 'MOVE_LEFT', 'MOVE_RIGHT'];
 
-  state_live: string = 'ALIVE';   // 生存ステータス
-  state_move: string = 'STOP';    // 動作ステータス
+  liveState: string = 'ALIVE';   // 生存ステータス
+  moveState: string = 'STOP';    // 動作ステータス
 
   life: number = 3;               // 機体のライフ(ビーム1発で爆発するが復活でき、その回数)
 
-  move_dx: number = 20;           // 移動速度
-  shooting_span: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
-  shooting_interval: number = 1;  // 発射間隔
-  reviving_span: number = 0;      // 復活アニメーションの経過時間
-  max_reviving_span: number = 300;// 復活アニメーションの所要時間
+  moveDx: number = 20;           // 移動速度
+  shootingSpan: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
+  shootingInterval: number = 1;  // 発射間隔
+  revivingSpan: number = 0;      // 復活アニメーションの経過時間
+  maxRevivingSpan: number = 300; // 復活アニメーションの所要時間
   
   beams: cc.Node[] = [];
-  sprite_empty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
-  playingCanvas: PlayingCanvas = null;
+  spriteEmpty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
 
   /**
    * プレイヤーを移動させる
    * @param moveLeft 左への移動可否(否なら右へ移動))
    */
   movePlayer(moveLeft: boolean): void {
-    this.state_move = moveLeft ? 'MOVE_LEFT' : 'MOVE_RIGHT';
-    const half_width_of_parent = this.node.parent.width / 2;
-    const half_width_myself = this.node.width / 2;
-    const new_x = Math.max(-(half_width_of_parent) + half_width_myself, // 左端
-                    Math.min(half_width_of_parent - half_width_myself,  // 右端
-                      this.node.position.x - (moveLeft ? this.move_dx : -(this.move_dx))));  // 移動予定場所
-    this.node.setPositionX(new_x);
+    this.moveState = moveLeft ? 'MOVE_LEFT' : 'MOVE_RIGHT';
+    const halfWidthOfParent = this.node.parent.width / 2;
+    const halfWidthMyself = this.node.width / 2;
+    const newX = Math.max(-(halfWidthOfParent) + halfWidthMyself, // 左端
+                    Math.min(halfWidthOfParent - halfWidthMyself,  // 右端
+                      this.node.position.x - (moveLeft ? this.moveDx : -(this.moveDx))));  // 移動予定場所
+    this.node.setPositionX(newX);
   }
 
   /**
    * プレイヤーを停止させる
    */
   stopPlayer(): void {
-    this.state_move = 'STOP';
+    this.moveState = 'STOP';
   }
 
   /**
    * プレイヤーの画像をステータスに応じて再設定する
    */
-  resetSpriteFrameByMoveState(): void {
-    const move_sprites_map: {[key: string]: cc.Sprite} = {
-      STOP:       this.sprite_stop,
-      MOVE_LEFT:  this.sprite_move_left,
-      MOVE_RIGHT: this.sprite_move_right
+  resetSpriteFrameBymoveState(): void {
+    const moveSpritesMap: {[key: string]: cc.Sprite} = {
+      STOP:       this.spriteStop,
+      MOVE_LEFT:  this.spriteMoveLeft,
+      MOVE_RIGHT: this.spriteMoveRight
     };
 
-    if (this.state_live === 'ALIVE') {
+    if (this.liveState === 'ALIVE') {
       const sprite = this.node.getComponent(cc.Sprite);
-      sprite.spriteFrame = move_sprites_map[this.state_move].spriteFrame;
-    } else if (this.state_live === 'EXPLODING') {
+      sprite.spriteFrame = moveSpritesMap[this.moveState].spriteFrame;
+    } else if (this.liveState === 'EXPLODING') {
       const sprite = this.node.getComponent(cc.Sprite);
-      sprite.spriteFrame = this.sprite_explode.spriteFrame;
-    } else if (this.state_live === 'REVIVING') {
+      sprite.spriteFrame = this.spriteExplode.spriteFrame;
+    } else if (this.liveState === 'REVIVING') {
       /* 復活所要時間中は点滅させる */
-      if (this.reviving_span % 30 <= 5) {
+      if (this.revivingSpan % 30 <= 5) {
         const sprite = this.node.getComponent(cc.Sprite);
-        sprite.spriteFrame = this.sprite_empty.spriteFrame;
+        sprite.spriteFrame = this.spriteEmpty.spriteFrame;
       } else {
         const sprite = this.node.getComponent(cc.Sprite);
-        sprite.spriteFrame = move_sprites_map[this.state_move].spriteFrame;
+        sprite.spriteFrame = moveSpritesMap[this.moveState].spriteFrame;
       }
     }
   }
 
   processExploding() {
-    const explode_anime_state = this.sprite_explode.getComponent(cc.Animation).getAnimationState("explode");
-    if (!explode_anime_state.isPlaying || explode_anime_state.isPaused) {
-      explode_anime_state.play();
-    } else if (explode_anime_state.time > 0.20) {
-      explode_anime_state.stop();
-      this.state_live = 'EXPLODED';
+    const explodeAnimeState = this.spriteExplode.getComponent(cc.Animation).getAnimationState("explode");
+    if (!explodeAnimeState.isPlaying || explodeAnimeState.isPaused) {
+      explodeAnimeState.play();
+    } else if (explodeAnimeState.time > 0.20) {
+      explodeAnimeState.stop();
+      this.liveState = 'EXPLODED';
     }
   }
 
   processExploded() {
     this.life--;
     if (this.life > 0) {
-      this.state_live = 'REVIVING';
+      this.liveState = 'REVIVING';
       return;
     }
-    this.state_live = 'DEAD';
+    this.liveState = 'DEAD';
   }
 
   processReviving() {
-    this.reviving_span++;
+    this.revivingSpan++;
 
     /* 復活所要時間が経過したらステータスを ALIVE にして画像を再設定する */
-    if (this.reviving_span >= this.max_reviving_span) {
-      this.reviving_span = 0;
-      this.state_live = 'ALIVE';
+    if (this.revivingSpan >= this.maxRevivingSpan) {
+      this.revivingSpan = 0;
+      this.liveState = 'ALIVE';
       return;
     }
   }
@@ -122,11 +119,11 @@ export default class Player extends cc.Component {
    * ビームを発射する
    */
   shoot(): void {
-    const beam = cc.instantiate(this.beam_prefab);
+    const beam = cc.instantiate(this.beamPrefab);
 
     beam.setPosition(this.node.position.x, this.node.position.y + this.node.height / 2);
     let dx: number = 0, dy: number = 10;
-    switch (this.state_move) {
+    switch (this.moveState) {
       case 'STOP':
         dx = 0;
         break;
@@ -143,7 +140,7 @@ export default class Player extends cc.Component {
 
     this.node.parent.addChild(beam);
     this.beams.push(beam);
-    this.shooting_span = 0;
+    this.shootingSpan = 0;
   }
 
   onEnable() {
@@ -157,8 +154,8 @@ export default class Player extends cc.Component {
    * @param self 自分
    */
   onCollisionEnter(other, self) {
-    if (this.state_live === 'ALIVE' && other.tag === 3) {  // 敵機ビームとの衝突
-      this.state_live = 'EXPLODING';
+    if (this.liveState === 'ALIVE' && other.tag === 3) {  // 敵機ビームとの衝突
+      this.liveState = 'EXPLODING';
     }
   }
 
@@ -169,28 +166,28 @@ export default class Player extends cc.Component {
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, (e) => {
       switch (e.keyCode) {
         case cc.KEY.left:
-          this.state_move = 'MOVE_LEFT';
+          this.moveState = 'MOVE_LEFT';
           this.movePlayer(true);
           break;
         case cc.KEY.right:
-          this.state_move = 'MOVE_RIGHT';
+          this.moveState = 'MOVE_RIGHT';
           this.movePlayer(false);
           break;
         case cc.KEY.space:
-          this.shooting_span++;
-          if (this.shooting_span >= this.shooting_interval) {
+          this.shootingSpan++;
+          if (this.shootingSpan >= this.shootingInterval) {
             this.shoot();
           }
           break;
       }
     }, this);
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, (e) => {
-      this.state_move = 'STOP';
+      this.moveState = 'STOP';
     }, this);
   }
 
   update(dt) {
-    switch (this.state_live) {
+    switch (this.liveState) {
       case 'ALIVE':
         break;
       case 'REVIVING':
@@ -203,6 +200,6 @@ export default class Player extends cc.Component {
         this.processExploded();
         break;
     }
-    this.resetSpriteFrameByMoveState();
+    this.resetSpriteFrameBymoveState();
   }
 }

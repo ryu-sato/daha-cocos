@@ -399,17 +399,17 @@
       "__id__": 1
     },
     "_enabled": true,
-    "sprite_stop": {
+    "spriteStop": {
       "__id__": 3
     },
-    "sprite_explode": {
+    "spriteExplode": {
       "__id__": 10
     },
-    "sprite_fall": {
+    "spriteFall": {
       "__id__": 6
     },
-    "max_fall_step": 540,
-    "beam_prefab": {
+    "maxFallStep": 540,
+    "beamPrefab": {
       "__uuid__": "4ea9475c-4521-4905-867f-f0beebf96b83"
     }
   },
