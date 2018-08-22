@@ -100,7 +100,6 @@ export default class Enemy extends cc.Component {
           sprite.spriteFrame = this.sprite_explode.spriteFrame;
           return;
         case 'DEAD':
-          sprite.spriteFrame = this.sprite_explode.spriteFrame;
           return;
       }
     }

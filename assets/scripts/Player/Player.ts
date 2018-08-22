@@ -12,6 +12,9 @@ export default class Player extends cc.Component {
   @property(cc.Sprite)
   sprite_move_right: cc.Sprite = null;
 
+  @property(cc.Sprite)
+  sprite_explode: cc.Sprite = null; // 爆発アニメーション
+
   @property(cc.Prefab)
   beam_prefab: cc.Prefab = null;  // ビーム
 
@@ -22,14 +25,16 @@ export default class Player extends cc.Component {
   state_live: string = 'ALIVE';   // 生存ステータス
   state_move: string = 'STOP';    // 動作ステータス
 
-  life: number = 1;               // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
-  // fall_step_elapsed: number = 0;  // 落下アニメーションの経過ステップ数(MAXになったら0にリセットされる)
+  life: number = 3;               // 機体のライフ(ビーム1発で爆発するが復活でき、その回数)
 
   move_dx: number = 20;           // 移動速度
   shooting_span: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
   shooting_interval: number = 1;  // 発射間隔
-
+  reviving_span: number = 0;      // 復活アニメーションの経過時間
+  max_reviving_span: number = 300;// 復活アニメーションの所要時間
+  
   beams: cc.Node[] = [];
+  sprite_empty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
 
   /**
    * プレイヤーを移動させる
@@ -56,26 +61,58 @@ export default class Player extends cc.Component {
    * プレイヤーの画像をステータスに応じて再設定する
    */
   resetSpriteFrameByMoveState(): void {
-    const sprite = this.node.getComponent(cc.Sprite);
-    switch(this.state_move) {
-      case 'STOP':
-        sprite.spriteFrame = this.sprite_stop.spriteFrame;
-        return;
-      case 'MOVE_LEFT':
-        sprite.spriteFrame = this.sprite_move_left.spriteFrame;
-        return;
-      case 'MOVE_RIGHT':
-        sprite.spriteFrame = this.sprite_move_right.spriteFrame;
-        return;
+    const move_sprites_map: {[key: string]: cc.Sprite} = {
+      STOP:       this.sprite_stop,
+      MOVE_LEFT:  this.sprite_move_left,
+      MOVE_RIGHT: this.sprite_move_right
+    };
+
+    if (this.state_live === 'ALIVE') {
+      const sprite = this.node.getComponent(cc.Sprite);
+      sprite.spriteFrame = move_sprites_map[this.state_move].spriteFrame;
+    } else if (this.state_live === 'EXPLODING') {
+      const sprite = this.node.getComponent(cc.Sprite);
+      sprite.spriteFrame = this.sprite_explode.spriteFrame;
+    } else if (this.state_live === 'REVIVING') {
+      /* 復活所要時間中は点滅させる */
+      if (this.reviving_span % 30 <= 5) {
+        const sprite = this.node.getComponent(cc.Sprite);
+        sprite.spriteFrame = this.sprite_empty.spriteFrame;
+      } else {
+        const sprite = this.node.getComponent(cc.Sprite);
+        sprite.spriteFrame = move_sprites_map[this.state_move].spriteFrame;
+      }
     }
   }
 
   processExplode() {
-    // [TODO] 爆発アニメーションを作成する
+    const explode_anime_state = this.sprite_explode.getComponent(cc.Animation).getAnimationState("explode");
+    if (!explode_anime_state.isPlaying || explode_anime_state.isPaused) {
+      explode_anime_state.play();
+    } else if (explode_anime_state.time > 0.20) {
+      explode_anime_state.stop();
+      this.state_live = 'DEAD';
+    }
+  }
+
+  processDead() {
+    this.life--;
+    if (this.life > 0) {
+      this.state_live = 'REVIVING';
+      return;
+    }
+    // [TODO] ゲームオーバー
   }
 
   processReviving() {
-    // [TODO] 復活アニメーションを作成する
+    this.reviving_span++;
+
+    /* 復活所要時間が経過したらステータスを ALIVE にして画像を再設定する */
+    if (this.reviving_span >= this.max_reviving_span) {
+      this.reviving_span = 0;
+      this.state_live = 'ALIVE';
+      return;
+    }
   }
 
   /**
@@ -117,11 +154,8 @@ export default class Player extends cc.Component {
    * @param self 自分
    */
   onCollisionEnter(other, self) {
-    if (other.tag === 3) {  // 敵機ビームとの衝突
-      this.life--;
-      if (this.life <= 0) {
-        this.state_live = 'EXPLODING';
-      }
+    if (this.state_live === 'ALIVE' && other.tag === 3) {  // 敵機ビームとの衝突
+      this.state_live = 'EXPLODING';
     }
   }
 
@@ -146,24 +180,26 @@ export default class Player extends cc.Component {
           }
           break;
       }
-      this.resetSpriteFrameByMoveState();
     }, this);
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, (e) => {
       this.state_move = 'STOP';
-      this.resetSpriteFrameByMoveState();
     }, this);
   }
 
   update(dt) {
     switch (this.state_live) {
       case 'ALIVE':
-        return;
+        break;
       case 'REVIVING':
         this.processReviving();
-        return;
+        break;
       case 'EXPLODING':
         this.processExplode();
-        return;
+        break;
+      case 'DEAD':
+        this.processDead();
+        break;
     }
+    this.resetSpriteFrameByMoveState();
   }
 }
