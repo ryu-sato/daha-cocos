@@ -1,7 +1,11 @@
+import PlayingCanvas from "../Playing/PlayingCanvas";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class Enemy extends cc.Component {
+
+  canvas: PlayingCanvas = null;
 
   // [TODO] Enum 型を使う
   state_live_list: string[] = ['ALIVE', 'EXPLODING', 'DEAD'];

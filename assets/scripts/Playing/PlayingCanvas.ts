@@ -1,3 +1,5 @@
+import Player from "../Player/Player";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -33,6 +35,10 @@ export default class PlayingCanvas extends cc.Component {
 
   update() {
     if (this.node.childrenCount === 1) {  // [TODO] 残り子数ではなく enemies = 0 で判別する
+      cc.director.loadScene('GameTitle');
+    }
+    const player: Player = cc.find('Canvas/player').getComponent(Player);
+    if (player.state_live === 'DEAD') {
       cc.director.loadScene('GameTitle');
     }
   }

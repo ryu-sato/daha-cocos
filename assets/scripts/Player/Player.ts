@@ -1,3 +1,5 @@
+import PlayingCanvas from "../Playing/PlayingCanvas";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -19,7 +21,7 @@ export default class Player extends cc.Component {
   beam_prefab: cc.Prefab = null;  // ビーム
 
   // [TODO] Enum 型を使う
-  state_live_list: string[] = ['ALIVE', 'EXPLODING', 'DEAD', 'REVIVING'];
+  state_live_list: string[] = ['ALIVE', 'EXPLODING', 'EXPLODED', 'REVIVING', 'DEAD'];
   state_move_list: string[] = ['STOP', 'MOVE_LEFT', 'MOVE_RIGHT'];
 
   state_live: string = 'ALIVE';   // 生存ステータス
@@ -35,6 +37,7 @@ export default class Player extends cc.Component {
   
   beams: cc.Node[] = [];
   sprite_empty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
+  playingCanvas: PlayingCanvas = null;
 
   /**
    * プレイヤーを移動させる
@@ -85,23 +88,23 @@ export default class Player extends cc.Component {
     }
   }
 
-  processExplode() {
+  processExploding() {
     const explode_anime_state = this.sprite_explode.getComponent(cc.Animation).getAnimationState("explode");
     if (!explode_anime_state.isPlaying || explode_anime_state.isPaused) {
       explode_anime_state.play();
     } else if (explode_anime_state.time > 0.20) {
       explode_anime_state.stop();
-      this.state_live = 'DEAD';
+      this.state_live = 'EXPLODED';
     }
   }
 
-  processDead() {
+  processExploded() {
     this.life--;
     if (this.life > 0) {
       this.state_live = 'REVIVING';
       return;
     }
-    // [TODO] ゲームオーバー
+    this.state_live = 'DEAD';
   }
 
   processReviving() {
@@ -194,10 +197,10 @@ export default class Player extends cc.Component {
         this.processReviving();
         break;
       case 'EXPLODING':
-        this.processExplode();
+        this.processExploding();
         break;
-      case 'DEAD':
-        this.processDead();
+      case 'EXPLODED':
+        this.processExploded();
         break;
     }
     this.resetSpriteFrameByMoveState();

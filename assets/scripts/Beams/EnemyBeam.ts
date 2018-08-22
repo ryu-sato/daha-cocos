@@ -1,7 +1,11 @@
+import PlayingCanvas from "../Playing/PlayingCanvas";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export default class EnemyBeam extends cc.Component {
+
+  canvas: PlayingCanvas = null;
 
   @property(cc.Node)
   direction: cc.Node = null; // 移動方向 [TODO]dx,dyをクラス変数で扱う
