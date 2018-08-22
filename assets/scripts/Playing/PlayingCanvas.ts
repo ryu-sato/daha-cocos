@@ -1,5 +1,3 @@
-import * as Enemy from '../Enemies/Enemy';
-
 const { ccclass, property } = cc._decorator;
 
 @ccclass
