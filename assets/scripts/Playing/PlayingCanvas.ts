@@ -6,11 +6,21 @@ const { ccclass, property } = cc._decorator;
 export default class PlayingCanvas extends cc.Component {
 
   @property(cc.Prefab)
-  enemy_prefab: cc.Prefab = null; // 敵機
+  enemy_prefab: cc.Prefab = null;  // 敵機
+
+  @property(cc.Prefab)
+  player_prefab: cc.Prefab = null; // 自機
 
   enemies: cc.Node[] = [];
+  player: cc.Node = null;
 
   start() {
+    // 自機を初期化する
+    const player = cc.instantiate(this.player_prefab);
+    player.setPosition(0, -(this.node.height / 2) + (player.height / 2));
+    this.player = player;
+    this.node.addChild(player);
+
     // 敵機を初期化する
     for (let x: number = 0; x < 10; x++) {
       const enemy = cc.instantiate(this.enemy_prefab);
