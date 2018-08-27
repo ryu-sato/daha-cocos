@@ -1,12 +1,11 @@
 import Enemy from "../Enemies/Enemy";
-import PlayingCanvas from "../Playing/PlayingCanvas";
+import GameObjectBase from "../GameObjectBase";
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class FormationBase extends cc.Component {
+export default class FormationBase extends GameObjectBase {
 
-  protected _board: PlayingCanvas = null;
   protected _leader: Enemy = null;
   protected _members: Enemy[] = [];
 
@@ -15,14 +14,6 @@ export default class FormationBase extends cc.Component {
    */
   get leader(): Enemy {
     return this._leader;
-  }
-
-  /**
-   * ゲーム盤を設定する
-   * @param board プレイ中のゲーム盤
-   */
-  setBoard(board: PlayingCanvas) {
-    this._board = board;
   }
 
   /**

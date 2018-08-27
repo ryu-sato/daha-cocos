@@ -153,7 +153,7 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
     formationsCopied.forEach(f => f.deconstructFormation());
     this.formations = [];
     this.node.parent.removeChild(this.node);
-    // this.destroy();
+    this._board.destroyEnemy(this);
   }
 
   shoot(): void {
