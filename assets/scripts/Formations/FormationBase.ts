@@ -56,6 +56,7 @@ export default class FormationBase extends cc.Component {
     this._leader = null;
     this._members.forEach(m => this.leaveEnemy(m));
     this._members = [];
+    this._board.destroyFormation(this);
   }
 
   /**

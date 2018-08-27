@@ -58,6 +58,20 @@ export default class PlayingCanvas extends cc.Component {
            && x <= (this.node.width / 2) && y <= (this.node.height / 2);
   }
 
+  /**
+   * フォーメーションを破棄する
+   * @param formation 対象のフォーメーション
+   */
+  destroyFormation(formation: FormationBase): boolean {
+    const index = this.formations.indexOf(formation);
+    if (index === -1) {
+      return false;
+    }
+    this.node.removeChild(formation.node);
+    this.formations.splice(index, 1);
+    return true;
+  }
+
   start() {
     // 自機を初期化する
     const playerNode = cc.instantiate(this.playerPrefab);
@@ -66,7 +80,7 @@ export default class PlayingCanvas extends cc.Component {
     this.node.addChild(playerNode);
 
     // 敵機を初期化する
-    for (let x: number = 0; x < 4; x++) {
+    for (let x: number = 0; x < 10; x++) {
       const enemyNode = cc.instantiate(this.enemyPrefab);
       const enemy = enemyNode.getComponent(Enemy);
       this.setSquarePosition(enemy, x, 0);
@@ -90,10 +104,12 @@ export default class PlayingCanvas extends cc.Component {
           console.log('Found formation: ' + f.name);
 
           const formationNode = cc.instantiate(fp);
+          formationNode.setPosition(e.node.getPosition());
           const formation = formationNode.getComponent(FormationBase);
           formation.setBoard(this);
           formation.constructFormation(e);
           this.formations.push(formation);
+          this.node.addChild(formationNode);
         }
       });
     });
