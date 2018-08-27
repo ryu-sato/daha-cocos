@@ -8,18 +8,27 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class PlayingCanvas extends cc.Component {
 
+  // 敵機
   @property(cc.Prefab)
-  enemyPrefab: cc.Prefab = null;  // 敵機
+  enemyPrefab: cc.Prefab = null;
 
+  // 自機
   @property(cc.Prefab)
-  playerPrefab: cc.Prefab = null; // 自機
+  playerPrefab: cc.Prefab = null;
 
+  // フォーメーション用prefab
   @property([cc.Prefab])
   formationPrefabArray: cc.Prefab[] = [];
 
-  player: Player = null;          // プレイヤー機
-  enemies: Enemy[] = [];          // 敵機
-  formations: FormationBase[] = [];   // フォーメーション
+  // 敵機を破壊した時の点数
+  @property
+  scoreByDestroyingAnEnemy: number = null;
+
+  scoreText: cc.RichText = null;     // 表示用スコアテキスト
+  score: number = 0;                 // スコア
+  player: Player = null;             // プレイヤー機
+  enemies: Enemy[] = [];             // 敵機
+  formations: FormationBase[] = [];  // フォーメーション
 
   /* マス目盤の座標を設定する */
   setSquarePosition(target: GameObjectBase, xSquarePosition: number, ySquarePosition: number): void {
@@ -72,7 +81,37 @@ export default class PlayingCanvas extends cc.Component {
     return true;
   }
 
+  /**
+   * 敵機を破棄する
+   * @param enemy 対象の敵機
+   */
+  destroyEnemy(enemy: Enemy): boolean {
+    const index = this.enemies.indexOf(enemy);
+    if (index === -1) {
+      return false;
+    }
+    this.node.removeChild(enemy.node);
+    this.enemies.splice(index, 1);
+    this.score += this.scoreByDestroyingAnEnemy;
+    this.setScoreText();
+    return true;
+  }
+
+  /**
+   * スコアテキストを設定する
+   */
+  setScoreText() {
+    this.scoreText.string = this.score + '<font size="1">pt</font>';
+    this.scoreText.node.opacity = 100;
+  }
+
   start() {
+    // ゲーム盤を初期化する
+    const scoreNode = this.node.getChildByName("scoreBoard").getChildByName("score");
+    this.scoreText = scoreNode.getComponent(cc.RichText);
+    this.score = 99999999999;
+    this.setScoreText();
+
     // 自機を初期化する
     const playerNode = cc.instantiate(this.playerPrefab);
     const player = playerNode.getComponent(Player);
@@ -84,6 +123,7 @@ export default class PlayingCanvas extends cc.Component {
       for (let x: number = 0; x < 5; x++) {
         const enemyNode = cc.instantiate(this.enemyPrefab);
         const enemy = enemyNode.getComponent(Enemy);
+        enemy.setBoard(this);
         this.setSquarePosition(enemy, x, y);
         this.enemies.push(enemy);
         this.node.addChild(enemyNode);
@@ -91,6 +131,7 @@ export default class PlayingCanvas extends cc.Component {
     }
     
     // フォーメーションを初期化する
+    // [TODO] setBoard しなくてもゲーム盤のインスタンスを参照できるようにする
     this.formationPrefabArray.forEach(fp => {
       fp.data.getComponent(FormationBase).setBoard(this)
     });
