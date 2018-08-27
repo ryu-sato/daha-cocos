@@ -12,13 +12,16 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
   stateLiveList: string[] = ['ALIVE', 'EXPLODING', 'DEAD'];
   stateMoveList: string[] = ['STOP', 'FALL'];
 
-  stateLive: string = 'ALIVE';      // 生存ステータス
-  stateMove: string = 'FALL';       // 動作ステータス
+  stateLive: string = 'ALIVE';         // 生存ステータス
+  stateMove: string = 'FALL';          // 動作ステータス
 
-  life: number = 1;                 // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
+  private life: number = 1;            // 機体のライフ(デフォルト値は1だがフォーメーションを組むと増える)
+  private defencePower: number = 1;    // 防御力(damage = 1 / defencePower)
+  private maxDefencePower: number = 10;// 最大防御力
+  private minDefencePower: number = 1; // 最小防御力
 
   @property(cc.Sprite)
-  spriteStop: cc.Sprite = null;     // 停止
+  spriteStop: cc.Sprite = null;        // 停止
 
   @property(cc.Sprite)
   spriteExplode: cc.Sprite = null;  // 爆発アニメーション
@@ -71,6 +74,26 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
       return;
     }
     this.shootingDirections.splice(index, 1);
+  }
+
+  /**
+   * 防御力を強化する
+   * @param diffPower 強化させる防御力
+   */
+  strengthen(diffPower: number) {
+    this.defencePower = Math.max(this.minDefencePower,
+                          Math.min(this.defencePower + diffPower,
+                            this.maxDefencePower));
+  }
+
+  /**
+   * 防御力を下げる
+   * @param diffPower 下げる防御力
+   */
+  weaken(diffPower: number) {
+    this.defencePower = Math.max(this.minDefencePower,
+                          Math.min(this.defencePower - diffPower,
+                            this.maxDefencePower));
   }
 
   /**
@@ -183,7 +206,7 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
    */
   onCollisionEnter(other, self) {
     if (other.tag === 2) {  // プレイヤービームとの衝突
-      this.life--;
+      this.life -= 1 / this.defencePower;
       if (this.life <= 0) {
         this.stateLive = 'EXPLODING';
       }
