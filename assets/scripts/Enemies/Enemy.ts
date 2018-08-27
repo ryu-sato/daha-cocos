@@ -43,11 +43,24 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
 
   beams: EnemyBeam[] = [];            // 発射したビーム
   formations: FormationBase[] = [];
-  
+
+  /**
+   * 死亡しているか
+   */
   isDead(): boolean {
     return this.stateLive === 'DEAD';
   }
 
+  /**
+   * 停止しているか
+   */
+  isStopped(): boolean {
+    return this.stateMove === 'STOP';
+  }
+
+  /**
+   * フォーメーションを組んでいるか
+   */
   beInFormation(): boolean {
     return this.formations.length > 0;
   }
@@ -123,6 +136,13 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
   processAlive() {
     switch (this.stateMove) {
       case 'FALL':
+        /* 下に敵が止まっていたら落下処理は行わずに終了 */
+        const enemyBottom = this._board.enemyAt(this.x, this.y - this.height);
+        if (enemyBottom !== null) {
+          return;
+        }
+
+        /* 落下処理を行う */
         const fallAnimeState = this.spriteFall.getComponent(cc.Animation).getAnimationState("fall");
         if (!fallAnimeState.isPlaying || fallAnimeState.isPaused) {
           fallAnimeState.play();

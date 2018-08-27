@@ -5,8 +5,21 @@ import FormationBase from "../Formations/FormationBase";
 
 const { ccclass, property } = cc._decorator;
 
+/**
+ * ゲーム盤上のxy座標
+ */
+class SquarePosition {
+  x: number = 0;
+  y: number = 0;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
 @ccclass
 export default class PlayingCanvas extends cc.Component {
+
 
   // 敵機
   @property(cc.Prefab)
@@ -24,11 +37,26 @@ export default class PlayingCanvas extends cc.Component {
   @property
   scoreByDestroyingAnEnemy: number = null;
 
-  scoreText: cc.RichText = null;     // 表示用スコアテキスト
-  score: number = 0;                 // スコア
   player: Player = null;             // プレイヤー機
   enemies: Enemy[] = [];             // 敵機
   formations: FormationBase[] = [];  // フォーメーション
+
+  // 表示用難易度テキスト(デバッグ用)
+  difficultyText: cc.RichText = null;
+
+  // 表示用スコアテキスト
+  scoreText: cc.RichText = null;
+  // スコア
+  score: number = 0;
+
+  // ステージ番号
+  stage: number = 1;
+  // 表示用ステージテキスト
+  stageText: cc.RichText = null;
+
+  // ゲームステータス
+  // [TODO] ENUMにする
+  gameStatus: string = 'LOADING_STAGE';
 
   /* マス目盤の座標を設定する */
   setSquarePosition(target: GameObjectBase, xSquarePosition: number, ySquarePosition: number): void {
@@ -45,8 +73,9 @@ export default class PlayingCanvas extends cc.Component {
   }
 
   /* 指定した座標にいる敵を返す */
+  // [TODO] マス目で扱う
   enemyAt(x: number, y: number): Enemy {
-    const enemies = this.enemies.filter(e => e.node.position.x === x && e.node.position.y === y);
+    const enemies = this.enemies.filter(e => e.x >= x - 3 && e.x <= x + 3 && e.y >= y - 3 && e.y <= y + 3);
     if (enemies.length > 1) {
       console.log('Position conflict: ' + JSON.stringify(enemies));
       return null;
@@ -58,13 +87,12 @@ export default class PlayingCanvas extends cc.Component {
   }
 
   /**
-   * 指定した座標の点がゲーム盤内に収まっているか
-   * @param x X座標
-   * @param y y座標
+   * 指定したオブジェクトが完全にゲーム盤内に収まっているか
+   * @param gameObject 対象のゲームオブジェクト
    */
-  include(x: number, y: number): boolean {
-    return x >= -(this.node.width / 2) && y >= -(this.node.height / 2)
-           && x <= (this.node.width / 2) && y <= (this.node.height / 2);
+  include(gameObject: GameObjectBase): boolean {
+    return gameObject.xLeft >= -(this.node.width / 2) && gameObject.yBottom >= -(this.node.height / 2)
+           && gameObject.xRight <= (this.node.width / 2) && gameObject.yTop <= (this.node.height / 2);
   }
 
   /**
@@ -93,24 +121,110 @@ export default class PlayingCanvas extends cc.Component {
     this.node.removeChild(enemy.node);
     this.enemies.splice(index, 1);
     this.score += this.scoreByDestroyingAnEnemy;
-    this.setScoreText();
+    this.setInfoBoard();
     return true;
   }
 
   /**
    * スコアテキストを設定する
    */
-  setScoreText() {
+  setInfoBoard() {
     this.scoreText.string = this.score + '<font size="1">pt</font>';
-    this.scoreText.node.opacity = 100;
+    this.stageText.string = '<font size="3">Stage: </font>' + this.stage;
+    this.difficultyText.string = 'Difficulty: ' + this.culculateDifficultyLevel(this.enemies);
+  }
+
+  /**
+   * ステージクリア処理を行う
+   */
+  private processStageClear() {
+    this.stage++;
+    this.gameStatus = 'LOADING_STAGE';
+    this.generateStage(this.stage);
+  }
+
+  /**
+   * 全ての敵機がステージ内に収まって表示されているか
+   */
+  private includeAllEnemies(): boolean {
+    return this.enemies.filter(e => !this.include(e)).length === 0;
+  }
+
+  /**
+   * 難易度を計算する
+   * @param enemies 敵機
+   */
+  private culculateDifficultyLevel(enemies: Enemy[]): number {
+    const formations: FormationBase[] = [];
+    this.formationPrefabArray.forEach(fp => {
+      const f = fp.data.getComponent(FormationBase);
+      this.enemies.forEach(e => {
+        if (f.canBeInFormationWith(e)
+            && formations.findIndex(f => f.node.name === fp.name && f.leader == e) === -1) {
+          const formationNode = cc.instantiate(fp);
+          const formation = formationNode.getComponent(FormationBase);
+          formation.setBoard(this);
+          formations.push(formation);
+        }
+      });
+    });
+
+    if (formations.length === 0) {
+      return 0;
+    }
+    let difficultyLevel = 0;
+    const matrix = [
+      { formation: 'QuicknessFormation', point: 1.2 },
+      { formation: 'DefenceFormation',   point: 1.4 },
+      { formation: 'BurstBeamFormation', point: 1.3 }
+    ];
+    matrix.forEach(m => {
+      difficultyLevel += formations.filter(f => f.node.name === m.formation).length * m.point;
+    });
+    return difficultyLevel;
+  }
+
+  /**
+   * ステージを設定する
+   * @param difficultyLevel 難易度
+   */
+  private generateStage(difficultyLevel: number) {
+    if (difficultyLevel < 1) {
+      return;
+    }
+
+    let maxRetry = 30;
+    let newEnemies = [];
+    do {
+      let xyList: SquarePosition[] = [];
+      for (let x = 0; x < 11; x++) {
+        for (let y = 0; y < 5; y++) {
+          xyList.push(new SquarePosition(x, y));
+        }
+      }
+      newEnemies = [];
+      const numEnemies = Math.min(difficultyLevel * 5 + Math.floor(Math.random() * 5), xyList.length);
+      for (let i = 0; i < numEnemies; i++) {
+        const xy: SquarePosition = xyList.splice(Math.floor(Math.random() * (xyList.length - 1)), 1)[0];
+        const enemyNode = cc.instantiate(this.enemyPrefab);
+        const enemy = enemyNode.getComponent(Enemy);
+        enemy.setBoard(this);
+        this.setSquarePosition(enemy, xy.x, xy.y);
+        newEnemies.push(enemy);
+      }
+    } while(this.culculateDifficultyLevel(newEnemies) < difficultyLevel && --maxRetry > 0);
+    this.enemies = newEnemies;
+    newEnemies.forEach(e => this.node.addChild(e.node));
   }
 
   start() {
     // ゲーム盤を初期化する
-    const scoreNode = this.node.getChildByName("scoreBoard").getChildByName("score");
+    const infoBoard = this.node.getChildByName("infoBoard");
+    const scoreNode = infoBoard.getChildByName("score");
     this.scoreText = scoreNode.getComponent(cc.RichText);
-    this.score = 99999999999;
-    this.setScoreText();
+    this.score = 99999999999; // [TODO] 消す(スコア数が多くなった場合の配置を見るためにあえて大きくしている))))
+    this.stageText = infoBoard.getChildByName("stage").getComponent(cc.RichText);
+    this.difficultyText = infoBoard.getChildByName("difficulty").getComponent(cc.RichText);
 
     // 自機を初期化する
     const playerNode = cc.instantiate(this.playerPrefab);
@@ -119,17 +233,8 @@ export default class PlayingCanvas extends cc.Component {
     this.node.addChild(playerNode);
 
     // 敵機を初期化する
-    for (let y: number = 0; y < 2; y++) {
-      for (let x: number = 0; x < 5; x++) {
-        const enemyNode = cc.instantiate(this.enemyPrefab);
-        const enemy = enemyNode.getComponent(Enemy);
-        enemy.setBoard(this);
-        this.setSquarePosition(enemy, x, y);
-        this.enemies.push(enemy);
-        this.node.addChild(enemyNode);
-      }
-    }
-    
+    this.generateStage(this.stage);
+
     // フォーメーションを初期化する
     // [TODO] setBoard しなくてもゲーム盤のインスタンスを参照できるようにする
     this.formationPrefabArray.forEach(fp => {
@@ -139,29 +244,42 @@ export default class PlayingCanvas extends cc.Component {
 
   update() {
     /* フォーメーションを組むことが出来るか確認して、出来るようなら組む */
-    this.formationPrefabArray.forEach(fp => {
-      const f = fp.data.getComponent(FormationBase);
-      this.enemies.forEach(e => {
-        if (f.canBeInFormationWith(e)
-            && this.formations.findIndex(f => f.node.name === fp.name && f.leader == e) === -1) {
-          console.log('Found formation: ' + f.name);
+    if (this.gameStatus === 'PLAYING') {
+      this.formationPrefabArray.forEach(fp => {
+        const f = fp.data.getComponent(FormationBase);
+        this.enemies.forEach(e => {
+          if (f.canBeInFormationWith(e)
+              && this.formations.findIndex(f => f.node.name === fp.name && f.leader == e) === -1) {
+            console.log('Found formation: ' + f.name);
 
-          const formationNode = cc.instantiate(fp);
-          formationNode.setPosition(e.node.getPosition());
-          const formation = formationNode.getComponent(FormationBase);
-          formation.setBoard(this);
-          formation.constructFormation(e);
-          this.formations.push(formation);
-          this.node.addChild(formationNode);
-        }
+            const formationNode = cc.instantiate(fp);
+            formationNode.setPosition(e.node.getPosition());
+            const formation = formationNode.getComponent(FormationBase);
+            formation.setBoard(this);
+            formation.constructFormation(e);
+            this.formations.push(formation);
+            this.node.addChild(formationNode);
+          }
+        });
       });
-    });
-
-    if (this.enemies.filter(e => !e.isDead()).length === 0) {
-      cc.director.loadScene('GameTitle'); // [TODO] Error 対応) loadScene: Failed to load scene 'GameTitle' because 'GameTitle' is already loading
     }
+
+    /* 敵を全滅したらステージクリア時の処理を行う */
+    if (this.enemies.filter(e => !e.isDead()).length === 0) {
+      this.processStageClear();
+    }
+
+    /* 敵が画面上に表示され終わったらステージスタート処理を行う */
+    if (this.includeAllEnemies()) {
+      this.gameStatus = 'PLAYING';
+    }
+
     if (this.player.liveState === 'DEAD') {
+      // [TODO] GameOver処理を行う
+      // [TODO] Error 対応) loadScene: Failed to load scene 'GameTitle' because 'GameTitle' is already loading
       cc.director.loadScene('GameTitle');
     }
+
+    this.setInfoBoard();
   }
 }
