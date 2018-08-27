@@ -80,12 +80,14 @@ export default class PlayingCanvas extends cc.Component {
     this.node.addChild(playerNode);
 
     // 敵機を初期化する
-    for (let x: number = 0; x < 10; x++) {
-      const enemyNode = cc.instantiate(this.enemyPrefab);
-      const enemy = enemyNode.getComponent(Enemy);
-      this.setSquarePosition(enemy, x, 0);
-      this.enemies.push(enemy);
-      this.node.addChild(enemyNode);
+    for (let y: number = 0; y < 2; y++) {
+      for (let x: number = 0; x < 5; x++) {
+        const enemyNode = cc.instantiate(this.enemyPrefab);
+        const enemy = enemyNode.getComponent(Enemy);
+        this.setSquarePosition(enemy, x, y);
+        this.enemies.push(enemy);
+        this.node.addChild(enemyNode);
+      }
     }
     
     // フォーメーションを初期化する

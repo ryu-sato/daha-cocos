@@ -1,6 +1,7 @@
 import FormationBase from "../Formations/FormationBase";
 import GameObjectBase from "../GameObjectBase";
 import FormationEventListener from "../Formations/FormationEventListener";
+import EnemyBeam from "../Beams/EnemyBeam";
 
 const { ccclass, property } = cc._decorator;
 
@@ -33,8 +34,11 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
 
   shootingSpan: number = 0;         // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
   shootingInterval: number = 60;    // 発射間隔
+  shootingDirections: cc.Size[] = [ // 発射する数と方向
+    new cc.Size(0, -3),             // 真下
+  ];
 
-  beams: cc.Node[] = [];            // 発射したビーム
+  beams: EnemyBeam[] = [];            // 発射したビーム
   formations: FormationBase[] = [];
   
   isDead(): boolean {
@@ -43,6 +47,30 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
 
   beInFormation(): boolean {
     return this.formations.length > 0;
+  }
+
+  /**
+   * 発射回数を1回増やして方向を決定する
+   * @param direction 発射方向
+   */
+  addShootingDirection(direction: cc.Size) {
+    const index = this.shootingDirections.findIndex(d => d.width === direction.width && d.height === direction.height);
+    if (index !== -1) {
+      return;
+    }
+    this.shootingDirections.push(direction);
+  }
+
+  /**
+   * 指定した発射方向に対する発射を1回減らす
+   * @param direction 発射方向
+   */
+  removeShootingDirection(direction: cc.Size) {
+    const index = this.shootingDirections.findIndex(d => d.width === direction.width && d.height === direction.height);
+    if (index === -1) {
+      return;
+    }
+    this.shootingDirections.splice(index, 1);
   }
 
   /**
@@ -106,17 +134,15 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
   }
 
   shoot(): void {
-    const beam = cc.instantiate(this.beamPrefab);
-
-    beam.setPosition(this.node.position.x, this.node.position.y - this.node.height / 2);
-    let dx: number = 0, dy: number = -3;
-    // [TODO] フォーメーションに応じて攻撃方法を変える
-    const direction = beam.getChildByName('direction');
-    direction.width = dx;
-    direction.height = dy;
-
-    this.node.parent.addChild(beam);
-    this.beams.push(beam);
+    this.shootingDirections.forEach(d => {
+      const beamNode = cc.instantiate(this.beamPrefab);
+      beamNode.setPosition(this.node.position.x, this.node.position.y - this.node.height / 2);
+      const beam = beamNode.getComponent(EnemyBeam);
+      beam.dx = d.width;
+      beam.dy = d.height;
+      this.beams.push(beam);
+      this.node.parent.addChild(beamNode);
+    });
     this.shootingSpan = 0;
   }
 
