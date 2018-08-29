@@ -28,14 +28,17 @@ export default class Player extends cc.Component {
   // 機体のライフ(ビーム1発で爆発するが復活でき、その回数)
   private _life: number = 3;
 
-  moveDx: number = 20;           // 移動速度
+  moveDx: number = 10;           // 移動速度
   shootingSpan: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
-  shootingInterval: number = 1;  // 発射間隔
+  shootingInterval: number = 10; // 発射間隔
   revivingSpan: number = 0;      // 復活アニメーションの経過時間
   maxRevivingSpan: number = 300; // 復活アニメーションの所要時間
   
   beams: cc.Node[] = [];
   spriteEmpty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
+
+  // 入力中のキーマップ(同時押しが有りうるので複数の値が true になりうる)
+  private pressKeys : Map<number,boolean> = new Map();
 
   /**
    * プレイヤーの残機
@@ -169,28 +172,35 @@ export default class Player extends cc.Component {
 
   /* ===== LIFE-CYCLE CALLBACKS ===== */
 
-  start() {
+  onLoad() {
     // キーボード入力でプレイヤー移動とビーム発射を行う
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, (e) => {
-      switch (e.keyCode) {
-        case cc.KEY.left:
-          this.moveState = 'MOVE_LEFT';
-          this.movePlayer(true);
-          break;
-        case cc.KEY.right:
-          this.moveState = 'MOVE_RIGHT';
-          this.movePlayer(false);
-          break;
-        case cc.KEY.space:
-          this.shootingSpan++;
-          if (this.shootingSpan >= this.shootingInterval) {
-            this.shoot();
-          }
-          break;
+      this.pressKeys.set(e.keyCode, true);
+
+      /* キーの入力に応じて移動方向を決定して移動用ステータスを変更する */
+      if (this.moveState === 'STOP') {
+        /* 停止状態から走り始めたらキーの方向に移動するステータスに遷移する */
+        switch (e.keyCode) {
+          case cc.KEY.left:
+            this.moveState = 'MOVE_LEFT';
+            break;
+          case cc.KEY.right:
+            this.moveState = 'MOVE_RIGHT';
+            break;
+        }
+      } else if (this.moveState === 'MOVE_LEFT' && e.keyCode === cc.KEY.right) {
+        /* 左へ移動中に右が押されたら右へ移動する */
+        this.moveState = 'MOVE_RIGHT';
+      } else if (this.moveState === 'MOVE_RIGHT' && e.keyCode === cc.KEY.left) {
+        /* 右へ移動中に左が押されたら左へ移動する */
+        this.moveState = 'MOVE_LEFT';
       }
     }, this);
     cc.systemEvent.on(cc.SystemEvent.EventType.KEY_UP, (e) => {
-      this.moveState = 'STOP';
+      this.pressKeys.delete(e.keyCode);
+      if (!this.pressKeys.has(cc.KEY.left) && !this.pressKeys.has(cc.KEY.right)) {
+        this.moveState = 'STOP';
+      }
     }, this);
   }
 
@@ -208,6 +218,21 @@ export default class Player extends cc.Component {
         this.processExploded();
         break;
     }
+
+    /* 移動用ステータスに応じて移動する */
+    if (this.moveState === 'MOVE_LEFT' && this.pressKeys.has(cc.KEY.left)) {
+      this.movePlayer(true);
+    } else if (this.moveState === 'MOVE_RIGHT' && this.pressKeys.has(cc.KEY.right)) {
+      this.movePlayer(false);
+    }
     this.resetSpriteFrameBymoveState();
+
+    /* スペースキーが押されたら攻撃する */
+    if (this.pressKeys.has(cc.KEY.space)) {
+      this.shootingSpan++;
+      if (this.shootingSpan >= this.shootingInterval) {
+        this.shoot();
+      }
+    }
   }
 }
