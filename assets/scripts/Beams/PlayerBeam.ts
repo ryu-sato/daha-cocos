@@ -10,22 +10,6 @@ export default class PlayerBeam extends cc.Component {
 
   /* ===== LIFE-CYCLE CALLBACKS ===== */
 
-  onEnable() {
-    // 衝突判定を有効にする
-    cc.director.getCollisionManager().enabled = true;
-  }
-
-  /**
-   * ノード同士の処理処理
-   * @param other 衝突相手
-   * @param self 自分
-   */
-  onCollisionEnter(other, self) {
-    if (other.tag === 1) {  // 敵機との衝突
-      this.node.parent.removeChild(this.node);
-    }
-  }
-
   update (dt) {
     // 移動
     this.node.setPosition(

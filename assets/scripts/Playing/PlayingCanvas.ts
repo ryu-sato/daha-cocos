@@ -20,7 +20,6 @@ class SquarePosition {
 @ccclass
 export default class PlayingCanvas extends cc.Component {
 
-
   // 敵機
   @property(cc.Prefab)
   enemyPrefab: cc.Prefab = null;

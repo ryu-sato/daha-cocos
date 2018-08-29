@@ -41,7 +41,6 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
     new cc.Size(0, -3),             // 真下
   ];
 
-  beams: EnemyBeam[] = [];            // 発射したビーム
   formations: FormationBase[] = [];
 
   /**
@@ -183,7 +182,6 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
       const beam = beamNode.getComponent(EnemyBeam);
       beam.dx = d.width;
       beam.dy = d.height;
-      this.beams.push(beam);
       this.node.parent.addChild(beamNode);
     });
     this.shootingSpan = 0;
@@ -225,13 +223,19 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
    * @param self 自分
    */
   onCollisionEnter(other, self) {
-    if (other.tag === 2) {  // プレイヤービームとの衝突
-      this.life -= 1 / this.defencePower;
-      if (this.life <= 0) {
-        this.stateLive = 'EXPLODING';
+    if (this.stateLive === 'ALIVE') {
+      if (other.tag === 2) {
+        // プレイヤービームと衝突したらビームを相殺する
+        other.node.parent.removeChild(other.node);
+      }
+      if (other.tag === 0 || other.tag === 2) {
+        // プレイヤー機又はプレイヤービームとの衝突でダメージを受ける
+        this.life -= 1 / this.defencePower;
+        if (this.life <= 0) {
+          this.stateLive = 'EXPLODING';
+        }
       }
     }
-    //[TODO] プレイヤーとの衝突
   }
 
   update(dt) {
