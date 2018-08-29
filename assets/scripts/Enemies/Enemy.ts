@@ -1,7 +1,7 @@
 import FormationBase from "../Formations/FormationBase";
 import GameObjectBase from "../GameObjectBase";
 import FormationEventListener from "../Formations/FormationEventListener";
-import EnemyBeam from "../Beams/EnemyBeam";
+import Beam from "../Beams/Beam";
 
 const { ccclass, property } = cc._decorator;
 
@@ -179,7 +179,7 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
     this.shootingDirections.forEach(d => {
       const beamNode = cc.instantiate(this.beamPrefab);
       beamNode.setPosition(this.node.position.x, this.node.position.y - this.node.height / 2);
-      const beam = beamNode.getComponent(EnemyBeam);
+      const beam = beamNode.getComponent(Beam);
       beam.dx = d.width;
       beam.dy = d.height;
       this.node.parent.addChild(beamNode);

@@ -4,7 +4,7 @@ import PlayingCanvas from "../Playing/PlayingCanvas";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class PlayerBeam extends GameObjectBase {
+export default class Beam extends GameObjectBase {
 
   private _dx: number = 0;
   private _dy: number = 0;

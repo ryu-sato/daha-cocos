@@ -20,6 +20,9 @@ class SquarePosition {
 @ccclass
 export default class PlayingCanvas extends cc.Component {
 
+  // インスタンス
+  private static _instance: PlayingCanvas = null;
+
   // 敵機
   @property(cc.Prefab)
   enemyPrefab: cc.Prefab = null;
@@ -60,6 +63,23 @@ export default class PlayingCanvas extends cc.Component {
   // [TODO] ENUMにする
   gameStatus: string = 'LOADING_STAGE';
 
+  /**
+   * インスタンスを取得する
+   */
+  static get instance(): PlayingCanvas {
+    return PlayingCanvas._instance;
+  }
+
+  /**
+   * コンストラクタ
+   */
+  constructor() {
+    super();
+
+    /* static にアクセスできるようインスタンスを保存する */
+    PlayingCanvas._instance = this;
+  }
+
   /* マス目盤の座標を設定する */
   setSquarePosition(target: GameObjectBase, xSquarePosition: number, ySquarePosition: number): void {
     target.node.setPosition(
@@ -93,8 +113,17 @@ export default class PlayingCanvas extends cc.Component {
    * @param gameObject 対象のゲームオブジェクト
    */
   include(gameObject: GameObjectBase): boolean {
-    return gameObject.xLeft >= -(this.node.width / 2) && gameObject.yBottom >= -(this.node.height / 2)
-           && gameObject.xRight <= (this.node.width / 2) && gameObject.yTop <= (this.node.height / 2);
+    return -(this.node.width / 2) <= gameObject.xLeft && gameObject.xRight <= (this.node.width / 2)
+           && -(this.node.height / 2) <= gameObject.yBottom && gameObject.yTop <= (this.node.height / 2);
+  }
+
+  /**
+   * 指定したオブジェクトが完全にゲーム盤外に出ているか
+   * @param gameObject 対象のゲームオブジェクト
+   */
+  exclude(gameObject: GameObjectBase): boolean {
+    return gameObject.xRight < -(this.node.width / 2) || (this.node.width / 2) < gameObject.xLeft
+           || gameObject.yTop < -(this.node.height / 2) || (this.node.height / 2) < gameObject.yBottom;
   }
 
   /**
