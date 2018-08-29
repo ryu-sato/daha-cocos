@@ -1,20 +1,21 @@
 import FormationBase from "./FormationBase";
 import Enemy from "../Enemies/Enemy";
+import PlayingCanvas from "../Playing/PlayingCanvas";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
 export default class QuicknessFormation extends FormationBase {
 
-  protected _quickness = 1;
+  protected quickness = 1;
 
   /**
    * フォーメーションを組めるかどうか(override)
    */
   canBeInFormationWith(leader: Enemy) {
     return (leader !== null
-      && this._board.existEnemyAt(leader.node.position.x - leader.node.width, leader.node.position.y)
-      && this._board.existEnemyAt(leader.node.position.x + leader.node.width, leader.node.position.y));
+      && PlayingCanvas.instance.existEnemyAt(leader.x - leader.width, leader.y)
+      && PlayingCanvas.instance.existEnemyAt(leader.x + leader.width, leader.y));
   }
 
   /**
@@ -27,8 +28,8 @@ export default class QuicknessFormation extends FormationBase {
 
     /* メンバーを配置された場所を元に探す */
     return [leader,
-      this._board.enemyAt(leader.node.position.x - leader.node.width, leader.node.position.y),
-      this._board.enemyAt(leader.node.position.x + leader.node.width, leader.node.position.y)];
+      PlayingCanvas.instance.enemyAt(leader.x - leader.width, leader.y),
+      PlayingCanvas.instance.enemyAt(leader.x + leader.width, leader.y)];
   }
 
   /** 
@@ -39,7 +40,7 @@ export default class QuicknessFormation extends FormationBase {
     if (!success) {
       return false;
     }
-    enemy.shootingInterval -= this._quickness;
+    enemy.shootingInterval -= this.quickness;
     return true;
   }
 
@@ -51,7 +52,7 @@ export default class QuicknessFormation extends FormationBase {
     if (!success) {
       return false;
     }
-    enemy.shootingInterval += this._quickness;
+    enemy.shootingInterval += this.quickness;
     return true;
   }
 }

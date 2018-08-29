@@ -195,7 +195,6 @@ export default class PlayingCanvas extends cc.Component {
             && formations.findIndex(f => f.node.name === fp.name && f.leader == e) === -1) {
           const formationNode = cc.instantiate(fp);
           const formation = formationNode.getComponent(FormationBase);
-          formation.setBoard(this);
           formations.push(formation);
         }
       });
@@ -241,7 +240,6 @@ export default class PlayingCanvas extends cc.Component {
         const xy: SquarePosition = xyList.splice(Math.floor(Math.random() * (xyList.length - 1)), 1)[0];
         const enemyNode = cc.instantiate(this.enemyPrefab);
         const enemy = enemyNode.getComponent(Enemy);
-        enemy.setBoard(this);
         this.setSquarePosition(enemy, xy.x, xy.y);
         newEnemies.push(enemy);
       }
@@ -269,12 +267,6 @@ export default class PlayingCanvas extends cc.Component {
 
     // 敵機を初期化する
     this.generateStage(this.stage);
-
-    // フォーメーションを初期化する
-    // [TODO] setBoard しなくてもゲーム盤のインスタンスを参照できるようにする
-    this.formationPrefabArray.forEach(fp => {
-      fp.data.getComponent(FormationBase).setBoard(this)
-    });
   }
 
   update() {
@@ -290,7 +282,6 @@ export default class PlayingCanvas extends cc.Component {
             const formationNode = cc.instantiate(fp);
             formationNode.setPosition(e.node.getPosition());
             const formation = formationNode.getComponent(FormationBase);
-            formation.setBoard(this);
             formation.constructFormation(e);
             this.formations.push(formation);
             this.node.addChild(formationNode);
