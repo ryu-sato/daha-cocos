@@ -54,6 +54,9 @@ export default class PlayingCanvas extends cc.Component {
   // 表示用ステージテキスト
   stageText: cc.RichText = null;
 
+  // プレイヤー残数
+  lifeText: cc.RichText = null;
+
   // ゲームステータス
   // [TODO] ENUMにする
   gameStatus: string = 'LOADING_STAGE';
@@ -129,9 +132,10 @@ export default class PlayingCanvas extends cc.Component {
    * スコアテキストを設定する
    */
   setInfoBoard() {
-    this.scoreText.string = this.score + '<font size="1">pt</font>';
-    this.stageText.string = '<font size="3">Stage: </font>' + this.stage;
+    this.scoreText.string = this.score + '<size=20>pt</size>';
+    this.stageText.string = '<size=40>Stage:</size>' + '<size=20>' + this.stage + '</size>';
     this.difficultyText.string = 'Difficulty: ' + this.culculateDifficultyLevel(this.enemies);
+    this.lifeText.string = 'Life: ' + this.player.life;
   }
 
   /**
@@ -195,6 +199,7 @@ export default class PlayingCanvas extends cc.Component {
 
     let maxRetry = 30;
     let newEnemies = [];
+    let difficulty = 0;
     do {
       let xyList: SquarePosition[] = [];
       for (let x = 0; x < 11; x++) {
@@ -212,7 +217,8 @@ export default class PlayingCanvas extends cc.Component {
         this.setSquarePosition(enemy, xy.x, xy.y);
         newEnemies.push(enemy);
       }
-    } while(this.culculateDifficultyLevel(newEnemies) < difficultyLevel && --maxRetry > 0);
+      difficulty = this.culculateDifficultyLevel(newEnemies);
+    } while(Math.abs(difficultyLevel - difficulty) < 2 && --maxRetry > 0);
     this.enemies = newEnemies;
     newEnemies.forEach(e => this.node.addChild(e.node));
   }
@@ -222,9 +228,10 @@ export default class PlayingCanvas extends cc.Component {
     const infoBoard = this.node.getChildByName("infoBoard");
     const scoreNode = infoBoard.getChildByName("score");
     this.scoreText = scoreNode.getComponent(cc.RichText);
-    this.score = 99999999999; // [TODO] 消す(スコア数が多くなった場合の配置を見るためにあえて大きくしている))))
+    this.score = 0;
     this.stageText = infoBoard.getChildByName("stage").getComponent(cc.RichText);
     this.difficultyText = infoBoard.getChildByName("difficulty").getComponent(cc.RichText);
+    this.lifeText = infoBoard.getChildByName("life").getComponent(cc.RichText);
 
     // 自機を初期化する
     const playerNode = cc.instantiate(this.playerPrefab);
@@ -266,6 +273,7 @@ export default class PlayingCanvas extends cc.Component {
 
     /* 敵を全滅したらステージクリア時の処理を行う */
     if (this.enemies.filter(e => !e.isDead()).length === 0) {
+      // [TODO] Stage アップアニメーションをする
       this.processStageClear();
     }
 
