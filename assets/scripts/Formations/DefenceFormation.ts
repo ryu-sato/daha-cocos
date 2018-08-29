@@ -1,5 +1,6 @@
 import FormationBase from "./FormationBase";
 import Enemy from "../Enemies/Enemy";
+import PlayingCanvas from "../Playing/PlayingCanvas";
 
 const { ccclass, property } = cc._decorator;
 
@@ -13,9 +14,9 @@ export default class DefenceFormation extends FormationBase {
    */
   canBeInFormationWith(leader: Enemy) {
     return (leader !== null
-      && this._board.existEnemyAt(leader.node.position.x, leader.node.position.y + leader.node.height)
-      && this._board.existEnemyAt(leader.node.position.x + leader.node.width, leader.node.position.y)
-      && this._board.existEnemyAt(leader.node.position.x + leader.node.width, leader.node.position.y + leader.node.height));
+      && PlayingCanvas.instance.existEnemyAt(leader.x, leader.y + leader.height)
+      && PlayingCanvas.instance.existEnemyAt(leader.x + leader.width, leader.y)
+      && PlayingCanvas.instance.existEnemyAt(leader.x + leader.width, leader.y + leader.height));
   }
 
   /**
@@ -28,9 +29,9 @@ export default class DefenceFormation extends FormationBase {
 
     /* メンバーを配置された場所を元に探す */
     return [leader,
-      this._board.enemyAt(leader.node.position.x, leader.node.position.y + leader.node.height),
-      this._board.enemyAt(leader.node.position.x + leader.node.width, leader.node.position.y),
-      this._board.enemyAt(leader.node.position.x + leader.node.width, leader.node.position.y + leader.node.height)];
+      PlayingCanvas.instance.enemyAt(leader.x, leader.y + leader.height),
+      PlayingCanvas.instance.enemyAt(leader.x + leader.width, leader.y),
+      PlayingCanvas.instance.enemyAt(leader.x + leader.width, leader.y + leader.height)];
   }
 
   /** 

@@ -8,8 +8,6 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class GameObjectBase extends cc.Component {
 
-  protected _board: PlayingCanvas = null;
-
   get x(): number {
     return this.node.position.x;
   }
@@ -48,13 +46,5 @@ export default class GameObjectBase extends cc.Component {
 
   get ySquare(): number {
     return Math.floor(this.node.position.y / this.node.height);
-  }
-
-  /**
-   * ゲーム盤を設定する
-   * @param board プレイ中のゲーム盤
-   */
-  setBoard(board: PlayingCanvas) {
-    this._board = board;
   }
 }

@@ -1,5 +1,6 @@
 import Enemy from "../Enemies/Enemy";
 import GameObjectBase from "../GameObjectBase";
+import PlayingCanvas from "../Playing/PlayingCanvas";
 
 const { ccclass, property } = cc._decorator;
 
@@ -47,7 +48,7 @@ export default class FormationBase extends GameObjectBase {
     this._leader = null;
     this._members.forEach(m => this.leaveEnemy(m));
     this._members = [];
-    this._board.destroyFormation(this);
+    PlayingCanvas.instance.destroyFormation(this);
   }
 
   /**

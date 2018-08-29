@@ -1,3 +1,5 @@
+import Beam from "../Beams/Beam";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -31,6 +33,12 @@ export default class Player extends cc.Component {
   moveDx: number = 10;           // 移動速度
   shootingSpan: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
   shootingInterval: number = 10; // 発射間隔
+  // ビームの移動ベクトル
+  beamVectors = [
+    { state: 'STOP',       dx: 0,  dy: 10 },
+    { state: 'MOVE_LEFT',  dx: 2,  dy: 10 },
+    { state: 'MOVE_RIGHT', dx: -2, dy: 10 },
+  ];
   revivingSpan: number = 0;      // 復活アニメーションの経過時間
   maxRevivingSpan: number = 300; // 復活アニメーションの所要時間
   
@@ -129,26 +137,15 @@ export default class Player extends cc.Component {
    * ビームを発射する
    */
   shoot(): void {
-    const beam = cc.instantiate(this.beamPrefab);
+    const beamNode = cc.instantiate(this.beamPrefab);
+    const beam = beamNode.getComponent(Beam);
 
-    beam.setPosition(this.node.position.x, this.node.position.y + this.node.height / 2);
-    let dx: number = 0, dy: number = 10;
-    switch (this.moveState) {
-      case 'STOP':
-        dx = 0;
-        break;
-      case 'MOVE_LEFT':
-        dx = 2;
-        break;
-      case 'MOVE_RIGHT':
-        dx = -2;
-        break;
-    }
-    const direction = beam.getChildByName('direction');
-    direction.width = dx;
-    direction.height = dy;
+    beamNode.setPosition(this.node.position.x, this.node.position.y + this.node.height / 2);
+    const vec = this.beamVectors.find(v => v.state === this.moveState);
+    beam.dx = vec.dx;
+    beam.dy = vec.dy;
+    this.node.parent.addChild(beamNode);
 
-    this.node.parent.addChild(beam);
     this.shootingSpan = 0;
   }
 

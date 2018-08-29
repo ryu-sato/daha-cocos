@@ -1,12 +1,13 @@
+import GameObjectBase from "../GameObjectBase";
+import PlayingCanvas from "../Playing/PlayingCanvas";
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class EnemyBeam extends cc.Component {
+export default class Beam extends GameObjectBase {
 
   private _dx: number = 0;
   private _dy: number = 0;
-
-  lifeCount = 300;          // 寿命(凡そ画面外に抜けるだろう期間※画面との包含関係で確認したい)
 
   get dx(): number {
     return this._dx;
@@ -34,8 +35,7 @@ export default class EnemyBeam extends cc.Component {
     );
 
     // 画面外に出たら削除する
-    // [NOTE] プレイヤー機からの相対値なので、ゲーム画面に座標は全て揃えたい
-    if (this.lifeCount-- <= 0) {
+    if (PlayingCanvas.instance.exclude(this)) {
       this.node.parent.removeChild(this.node);
     }
   }
