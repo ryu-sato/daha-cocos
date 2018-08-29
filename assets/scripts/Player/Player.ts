@@ -34,7 +34,6 @@ export default class Player extends cc.Component {
   revivingSpan: number = 0;      // 復活アニメーションの経過時間
   maxRevivingSpan: number = 300; // 復活アニメーションの所要時間
   
-  beams: cc.Node[] = [];
   spriteEmpty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
 
   // 入力中のキーマップ(同時押しが有りうるので複数の値が true になりうる)
@@ -150,7 +149,6 @@ export default class Player extends cc.Component {
     direction.height = dy;
 
     this.node.parent.addChild(beam);
-    this.beams.push(beam);
     this.shootingSpan = 0;
   }
 
@@ -165,8 +163,11 @@ export default class Player extends cc.Component {
    * @param self 自分
    */
   onCollisionEnter(other, self) {
-    if (this.liveState === 'ALIVE' && other.tag === 3) {  // 敵機ビームとの衝突
-      this.liveState = 'EXPLODING';
+    if (this.liveState === 'ALIVE') {
+      if (other.tag === 3 || other.tag === 1) {
+        // 敵機ビーム又は敵機との衝突で爆発する
+        this.liveState = 'EXPLODING';
+      }
     }
   }
 
