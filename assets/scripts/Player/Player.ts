@@ -25,7 +25,8 @@ export default class Player extends cc.Component {
   liveState: string = 'ALIVE';   // 生存ステータス
   moveState: string = 'STOP';    // 動作ステータス
 
-  life: number = 3;               // 機体のライフ(ビーム1発で爆発するが復活でき、その回数)
+  // 機体のライフ(ビーム1発で爆発するが復活でき、その回数)
+  private _life: number = 3;
 
   moveDx: number = 20;           // 移動速度
   shootingSpan: number = 0;      // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
@@ -35,6 +36,13 @@ export default class Player extends cc.Component {
   
   beams: cc.Node[] = [];
   spriteEmpty: cc.Sprite = new cc.Sprite;  // 透明表示用の空sprite
+
+  /**
+   * プレイヤーの残機
+   */
+  get life(): number {
+    return this._life;
+  }
 
   /**
    * プレイヤーを移動させる
@@ -96,8 +104,8 @@ export default class Player extends cc.Component {
   }
 
   processExploded() {
-    this.life--;
-    if (this.life > 0) {
+    this._life--;
+    if (this._life > 0) {
       this.liveState = 'REVIVING';
       return;
     }
