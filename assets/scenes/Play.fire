@@ -300,7 +300,7 @@
       "__id__": 6
     },
     "_enabled": true,
-    "_N$string": "<big>Stage</big>: 999",
+    "_N$string": "<size=20>Stage:</size><size=40>99</size>",
     "_N$horizontalAlign": 2,
     "_N$fontSize": 40,
     "_N$font": null,

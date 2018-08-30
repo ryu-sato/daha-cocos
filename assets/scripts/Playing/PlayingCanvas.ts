@@ -161,7 +161,7 @@ export default class PlayingCanvas extends cc.Component {
    */
   setInfoBoard() {
     this.scoreText.string = this.score + '<size=20>pt</size>';
-    this.stageText.string = '<size=40>Stage:</size>' + '<size=20>' + this.stage + '</size>';
+    this.stageText.string = '<size=20>Stage:</size>' + '<size=40>' + this.stage + '</size>';
     this.difficultyText.string = 'Difficulty: ' + this.culculateDifficultyLevel(this.enemies);
     this.lifeText.string = 'Life: ' + this.player.life;
   }
@@ -254,7 +254,6 @@ export default class PlayingCanvas extends cc.Component {
     const infoBoard = this.node.getChildByName("infoBoard");
     const scoreNode = infoBoard.getChildByName("score");
     this.scoreText = scoreNode.getComponent(cc.RichText);
-    this.score = 0;
     this.stageText = infoBoard.getChildByName("stage").getComponent(cc.RichText);
     this.difficultyText = infoBoard.getChildByName("difficulty").getComponent(cc.RichText);
     this.lifeText = infoBoard.getChildByName("life").getComponent(cc.RichText);
