@@ -1,6 +1,6 @@
 {
   "__type__": "cc.AnimationClip",
-  "_name": "enemy_fall",
+  "_name": "fall",
   "_objFlags": 0,
   "_native": "",
   "_duration": 0.7666666666666667,
