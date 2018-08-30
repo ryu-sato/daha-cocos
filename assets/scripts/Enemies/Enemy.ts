@@ -21,28 +21,35 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
   private maxDefencePower: number = 10;// 最大防御力
   private minDefencePower: number = 1; // 最小防御力
 
-  @property(cc.Sprite)
-  spriteStop: cc.Sprite = null;        // 停止
-
-  @property(cc.Sprite)
-  spriteExplode: cc.Sprite = null;  // 爆発アニメーション
-
-  @property(cc.Sprite)
-  spriteFall: cc.Sprite = null;     // 落下アニメーション
-
-  @property
-  maxFallStep: number = 0;          // 落下アニメーションの最大ステップ数
-
-  @property(cc.Prefab)
-  beamPrefab: cc.Prefab = null;     // ビーム
-
-  shootingSpan: number = 0;         // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
-  shootingInterval: number = 60;    // 発射間隔
-  shootingDirections: cc.Size[] = [ // 発射する数と方向
-    new cc.Size(0, -3),             // 真下
+  private shootingSpan: number = 0;         // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
+  private _shootingInterval: number = 60;    // 発射間隔
+  private shootingDirections: cc.Size[] = [  // 発射する数と方向
+    new cc.Size(0, -3),                      // 真下
   ];
+  private fallAnchor = 0;                    // 落下アニメーションの基準位置
+  private fallStep = 0;                      // 落下アニメーションのステップ数(maxになると0に戻る)
+  private formations: FormationBase[] = [];  // 所属しているフォーメーション
 
-  formations: FormationBase[] = [];
+  /* Nodeプロパティ群 */
+  // 停止
+  @property(cc.Sprite)
+  spriteStop: cc.Sprite = null;
+
+  // 爆発アニメーション
+  @property(cc.Sprite)
+  spriteExplode: cc.Sprite = null;
+
+  // 落下アニメーション
+  @property(cc.Sprite)
+  spriteFall: cc.Sprite = null;
+
+  // 落下アニメーションの最大ステップ数
+  @property
+  maxFallStep: number = 0;
+
+  // ビーム
+  @property(cc.Prefab)
+  beamPrefab: cc.Prefab = null;
 
   /**
    * 死亡しているか
@@ -63,6 +70,20 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
    */
   beInFormation(): boolean {
     return this.formations.length > 0;
+  }
+
+  /**
+   * 発射間隔を取得する
+   */
+  get shootingInterval(): number {
+    return this._shootingInterval;
+  }
+
+  /**
+   * 発射間隔を設定する
+   */
+  set shootingInterval(value: number) {
+    this._shootingInterval = value;
   }
 
   /**
@@ -130,6 +151,8 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
 
     if (this.formations.length === 0) {
       this.stateMove = 'FALL';
+      this.fallAnchor = this.y;
+      this.fallStep = 0;
     }
   }
 
@@ -147,8 +170,12 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
         if (!fallAnimeState.isPlaying || fallAnimeState.isPaused) {
           fallAnimeState.play();
         }
-        this.node.setPositionY(this.node.position.y
-          - (this.node.height / this.maxFallStep));
+        this.fallStep++;
+        this.node.setPositionY(this.fallAnchor - Math.floor(this.height * this.fallStep / this.maxFallStep));
+        if (this.fallStep >= this.maxFallStep) {
+          this.fallAnchor = this.y;
+          this.fallStep %= this.maxFallStep;
+        }
         return;
       case 'STOP':
         this.shootingSpan++;
@@ -213,6 +240,10 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
     }
   }
 
+  start() {
+    this.fallAnchor = this.y;
+  }
+
   onEnable() {
     // 衝突判定を有効にする
     cc.director.getCollisionManager().enabled = true;
@@ -255,5 +286,10 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
         return;
     }
     this.resetSpriteFrameByMoveState();
+
+    // 画面外に出たら死亡する
+    if (PlayingCanvas.instance.exclude(this)) {
+      this.processDead();
+    }
   }
 }

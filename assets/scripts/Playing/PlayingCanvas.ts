@@ -97,7 +97,7 @@ export default class PlayingCanvas extends cc.Component {
   /* 指定した座標にいる敵を返す */
   // [TODO] マス目で扱う
   enemyAt(x: number, y: number): Enemy {
-    const enemies = this.enemies.filter(e => e.x >= x - 3 && e.x <= x + 3 && e.y >= y - 3 && e.y <= y + 3);
+    const enemies = this.enemies.filter(e => e.x === x && e.y == y);
     if (enemies.length > 1) {
       console.log('Position conflict: ' + JSON.stringify(enemies));
       return null;
