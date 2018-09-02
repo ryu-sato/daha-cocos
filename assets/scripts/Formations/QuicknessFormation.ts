@@ -61,7 +61,7 @@ export default class QuicknessFormation extends FormationBase {
       return false;
     }
     if (enemy === this.leader) {
-      this.burstDirections.forEach(d => enemy.addShootingDirection(d));
+      this.burstDirections.forEach(d => enemy.removeShootingDirection(d));
     }
     enemy.shootingInterval += this.quickness;
     return true;

@@ -269,7 +269,7 @@
     ],
     "_prefab": null,
     "_id": "753gZOP3hPtpKg/ZKbmI8R",
-    "_opacity": 100,
+    "_opacity": 180,
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
@@ -338,7 +338,7 @@
     ],
     "_prefab": null,
     "_id": "d0KUklm6tM9pSab8y1ld1F",
-    "_opacity": 100,
+    "_opacity": 180,
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
@@ -407,7 +407,7 @@
     ],
     "_prefab": null,
     "_id": "86ODU+FoRD9aMblvLQdz2w",
-    "_opacity": 100,
+    "_opacity": 180,
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
@@ -476,7 +476,7 @@
     ],
     "_prefab": null,
     "_id": "f0TlTgYSRM9rqx9Q78oncj",
-    "_opacity": 100,
+    "_opacity": 150,
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
