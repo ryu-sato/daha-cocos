@@ -45,9 +45,9 @@ export default class FormationBase extends GameObjectBase {
    * フォーメーションを崩す
    */
   deconstructFormation(): void {
-    this._leader = null;
     this._members.forEach(m => this.leaveEnemy(m));
     this._members = [];
+    this._leader = null;
     PlayingCanvas.instance.destroyFormation(this);
   }
 
