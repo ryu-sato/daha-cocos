@@ -165,8 +165,8 @@ export default class PlayingCanvas extends cc.Component {
    * スコアテキストを設定する
    */
   setInfoBoard() {
-    this.scoreText.string = this.score + '<size=20>pt</size>';
-    this.stageText.string = '<size=20>Stage:</size>' + '<size=40>' + this.stage + '</size>';
+    this.scoreText.string = '<color=#ff0000>' + this.score + '</color><size=20>pt</size>';
+    this.stageText.string = '<size=20>Stage:</size>' + '<color=#ffff00><size=40>' + this.stage + '</size></color>';
     this.difficultyText.string = 'Difficulty: ' + this.culculateDifficultyLevel(this.enemies);
     this.lifeText.string = 'Life: ' + this.player.life;
   }
