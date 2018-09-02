@@ -63,6 +63,11 @@ export default class PlayingCanvas extends cc.Component {
   // [TODO] ENUMにする
   gameStatus: string = 'LOADING_STAGE';
 
+  // 敵配置領域
+  private areaContainEnemy: cc.Size = null;
+  private maxXSquare = 10;
+  private maxYSquare = 4;
+
   /**
    * インスタンスを取得する
    */
@@ -83,8 +88,8 @@ export default class PlayingCanvas extends cc.Component {
   /* マス目盤の座標を設定する */
   setSquarePosition(target: GameObjectBase, xSquarePosition: number, ySquarePosition: number): void {
     target.node.setPosition(
-      -(this.node.width / 2) + (target.node.width / 2) + target.node.width * xSquarePosition,
-      (this.node.height / 2) - (target.node.height / 2) - target.node.height * ySquarePosition,
+      -(this.areaContainEnemy.width / 2) + (target.node.width / 2) + target.node.width * xSquarePosition,
+      (this.areaContainEnemy.height / 2) - (target.node.height / 2) - target.node.height * ySquarePosition,
     );
   }
 
@@ -229,8 +234,8 @@ export default class PlayingCanvas extends cc.Component {
     let difficulty = 0;
     do {
       let xyList: SquarePosition[] = [];
-      for (let x = 0; x < 11; x++) {
-        for (let y = 0; y < 5; y++) {
+      for (let x = 0; x <= this.maxXSquare; x++) {
+        for (let y = 0; y <= this.maxYSquare; y++) {
           xyList.push(new SquarePosition(x, y));
         }
       }
@@ -251,6 +256,7 @@ export default class PlayingCanvas extends cc.Component {
 
   start() {
     // ゲーム盤を初期化する
+    this.areaContainEnemy = new cc.Size(this.node.width - 90, this.node.height - 100);
     const infoBoard = this.node.getChildByName("infoBoard");
     const scoreNode = infoBoard.getChildByName("score");
     this.scoreText = scoreNode.getComponent(cc.RichText);
