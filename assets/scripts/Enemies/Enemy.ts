@@ -24,7 +24,6 @@ export default class Enemy extends GameObjectBase implements FormationEventListe
   private shootingSpan: number = 0;         // 発射後の経過(intervalに達すると発射され、その後0にリセットされる))
   private _shootingInterval: number = 60;    // 発射間隔
   private shootingDirections: cc.Size[] = [  // 発射する数と方向
-    new cc.Size(0, -3),                      // 真下
   ];
   private fallAnchor = 0;                    // 落下アニメーションの基準位置
   private fallStep = 0;                      // 落下アニメーションのステップ数(maxになると0に戻る)

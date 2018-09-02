@@ -7,6 +7,11 @@ const {ccclass, property} = cc._decorator;
 @ccclass
 export default class QuicknessFormation extends FormationBase {
 
+  // 付与する発射方向
+  private burstDirections: cc.Size[] = [
+    new cc.Size(0, -3),
+  ];
+  // 上昇させる発射速度
   protected quickness = 1;
 
   /**
@@ -14,8 +19,8 @@ export default class QuicknessFormation extends FormationBase {
    */
   canBeInFormationWith(leader: Enemy) {
     return (leader !== null
-      && PlayingCanvas.instance.existEnemyAt(leader.x - leader.width, leader.y)
-      && PlayingCanvas.instance.existEnemyAt(leader.x + leader.width, leader.y));
+      && PlayingCanvas.instance.existEnemyAt(leader.x - leader.width, leader.y + leader.height)
+      && PlayingCanvas.instance.existEnemyAt(leader.x + leader.width, leader.y + leader.height));
   }
 
   /**
@@ -28,8 +33,8 @@ export default class QuicknessFormation extends FormationBase {
 
     /* メンバーを配置された場所を元に探す */
     return [leader,
-      PlayingCanvas.instance.enemyAt(leader.x - leader.width, leader.y),
-      PlayingCanvas.instance.enemyAt(leader.x + leader.width, leader.y)];
+      PlayingCanvas.instance.enemyAt(leader.x - leader.width, leader.y + leader.height),
+      PlayingCanvas.instance.enemyAt(leader.x + leader.width, leader.y + leader.height)];
   }
 
   /** 
@@ -39,6 +44,9 @@ export default class QuicknessFormation extends FormationBase {
     const success = super.joinEnemy(enemy);
     if (!success) {
       return false;
+    }
+    if (enemy === this.leader) {
+      this.burstDirections.forEach(d => enemy.addShootingDirection(d));
     }
     enemy.shootingInterval -= this.quickness;
     return true;
@@ -51,6 +59,9 @@ export default class QuicknessFormation extends FormationBase {
     const success = super.leaveEnemy(enemy);
     if (!success) {
       return false;
+    }
+    if (enemy === this.leader) {
+      this.burstDirections.forEach(d => enemy.addShootingDirection(d));
     }
     enemy.shootingInterval += this.quickness;
     return true;
